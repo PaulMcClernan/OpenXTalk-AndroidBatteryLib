@@ -1,0 +1,80 @@
+library com.livecode.library.androidbattery
+
+use com.livecode.foreign
+use com.livecode.java
+
+metadata title is "Android Battery Library"
+metadata author is "LiveCode"
+metadata version is "1.0.0"
+
+foreign handler ClassForName(in pClass as JString) returns JObject binds to "java:java.lang.Class>forName(Ljava/lang/String;)Ljava/lang/Class;!static"
+foreign handler GetCurrentApplicationMethod(in pActivityThread as JObject, in pMethod as JString, in pParams as optional JObject) returns JObject binds to "java:java.lang.Class>getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;"
+foreign handler MethodInvoke(in pMethod as JObject, in pInstance as optional JObject, in pParams as optional JObject) returns JObject binds to "java:java.lang.reflect.Method>invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;"
+
+foreign handler GetIntentFilter(in pAction as JString) returns JObject binds to "java:android.content.IntentFilter>new(Ljava/lang/String;)"
+foreign handler ApplicationRegisterReceiver(in pContext as JObject, in pObj as optional JObject, in pFilter as JObject) returns JObject binds to "java:android.content.Context>registerReceiver(Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;)Landroid/content/Intent;"
+foreign handler GetIntentValueInt(in pIntent as JObject, in pWhich as JString, in pDefault as CInt) returns CInt binds to "java:android.content.Intent>getIntExtra(Ljava/lang/String;I)I"
+
+public handler GetBatteryPercentage() returns Number
+	unsafe 
+	
+		// Get the application context. We rely on an undocumented 
+		// method to get this 'statically' at the moment.
+		variable tClass as JObject
+		put ClassForName(StringToJString("android.app.ActivityThread")) into tClass
+
+		variable tMethod as JObject
+		put GetCurrentApplicationMethod(tClass, StringToJString("currentApplication"), nothing) into tMethod
+				
+	 	variable tContext as JObject
+	 	put MethodInvoke(tMethod, nothing, nothing) into tContext
+	 	
+	 	// Get an intent filter for the battery changed intent		
+	 	variable tFilter as JObject
+	 	put GetIntentFilter(StringToJString("android.intent.action.BATTERY_CHANGED")) into tFilter
+
+		// Get the intent
+	 	variable tIntent as JObject
+	 	put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
+	 	    	
+		// Get the relevant values from the intent.
+		variable tLevel as Integer
+		put GetIntentValueInt(tIntent, StringToJString("level"), -1) into tLevel
+
+		variable tScale as Integer
+		put GetIntentValueInt(tIntent, StringToJString("scale"), -1) into tScale
+
+		return tLevel / tScale * 100	
+	end unsafe
+end handler
+
+public handler GetBatteryPlugged() returns Number
+  unsafe
+        // Get the application context. We rely on an undocumented
+       // method to get this ‘statically’ at the moment.
+    variable tClass as JObject
+    put ClassForName(StringToJString(“android.app.ActivityThread”)) into tClass
+    variable tMethod as JObject
+    put GetCurrentApplicationMethod(tClass, StringToJString(“currentApplication”), nothing) into tMethod
+    variable tContext as JObject
+    put MethodInvoke(tMethod, nothing, nothing) into tContext
+    // should move tContext into a global variable declaration (with onLoad function?)
+    
+    // Get an intent filter for the battery changed intent
+    variable tFilter as JObject
+    put GetIntentFilter(StringToJString(“android.intent.action.BATTERY_CHANGED”)) into tFilter
+ 
+    // Get the intent
+    variable tIntent as JObject
+    put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
+    
+    // Get the relevant values from the intent.
+    variable tPlugBool as Integer
+    put GetIntentValueInt(tIntent, StringToJString(“plugged”), -1) into tPlugBool
+    return tPlugBool
+    // Probably be nicer if it was returning a string “Plugged” or “Unplugged”
+    
+  end unsafe
+end handler
+
+end library
