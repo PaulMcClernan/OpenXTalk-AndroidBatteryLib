@@ -73,7 +73,8 @@ public handler GetBatteryPlugged() returns Number
     put GetIntentValueInt(tIntent, StringToJString(“plugged”), -1) into tPlugBool
     return tPlugBool
     // Probably be nicer if it was returning a string “Plugged” or “Unplugged”
-    
+    // rename the handler to BatteryIsPlugged and have it return a Boolean
+    // so it can be used in LC scripts like: if BatteryIsPlugged() is false then answer "Plug in Baby"
   end unsafe
 end handler
 
