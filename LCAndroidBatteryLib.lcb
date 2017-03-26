@@ -49,33 +49,33 @@ public handler GetBatteryPercentage() returns Number
 end handler
 
 public handler GetBatteryPlugged() returns Number
-  unsafe
-        // Get the application context. We rely on an undocumented
-       // method to get this ‘statically’ at the moment.
-    variable tClass as JObject
-    put ClassForName(StringToJString(“android.app.ActivityThread”)) into tClass
-    variable tMethod as JObject
-    put GetCurrentApplicationMethod(tClass, StringToJString(“currentApplication”), nothing) into tMethod
-    variable tContext as JObject
-    put MethodInvoke(tMethod, nothing, nothing) into tContext
-    // should move tContext into a global variable declaration (with onLoad function?)
-    
-    // Get an intent filter for the battery changed intent
-    variable tFilter as JObject
-    put GetIntentFilter(StringToJString(“android.intent.action.BATTERY_CHANGED”)) into tFilter
- 
-    // Get the intent
-    variable tIntent as JObject
-    put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
-    
-    // Get the relevant values from the intent.
-    variable tPlugBool as Integer
-    put GetIntentValueInt(tIntent, StringToJString(“plugged”), -1) into tPlugBool
-    return tPlugBool
-    // Probably be nicer if it was returning a string “Plugged” or “Unplugged”
-    // rename the handler to BatteryIsPlugged and have it return a Boolean
-    // so it can be used in LC scripts like: if BatteryIsPlugged() is false then answer "Plug in Baby"
-  end unsafe
+	unsafe 
+	
+		// Get the application context. We rely on an undocumented 
+		// method to get this 'statically' at the moment.
+		variable tClass as JObject
+		put ClassForName(StringToJString("android.app.ActivityThread")) into tClass
+
+		variable tMethod as JObject
+		put GetCurrentApplicationMethod(tClass, StringToJString("currentApplication"), nothing) into tMethod
+				
+	 	variable tContext as JObject
+	 	put MethodInvoke(tMethod, nothing, nothing) into tContext
+	 	
+	 	// Get an intent filter for the battery changed intent		
+	 	variable tFilter as JObject
+	 	put GetIntentFilter(StringToJString("android.intent.action.BATTERY_CHANGED")) into tFilter
+
+		// Get the intent
+	 	variable tIntent as JObject
+	 	put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
+	 	    	
+		// Get the relevant values from the intent.
+		variable tPlugBool as Integer
+		put GetIntentValueInt(tIntent, StringToJString("plugged"), -1) into tPlugBool
+		
+		return tPlugBool
+	end unsafe
 end handler
 
 end library
