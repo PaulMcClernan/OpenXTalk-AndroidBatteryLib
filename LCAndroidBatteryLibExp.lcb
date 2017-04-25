@@ -18,6 +18,15 @@ foreign handler GetIntentValueStr(in pIntent as JObject, in pWhich as JString, i
 
 --- https://developer.android.com/reference/android/os/BatteryManager.html
 
+
+/**
+Summary: Get an Android device battery's current charge percentage
+
+Description:
+Retreives the charged percentage amount as an integer from the Android OS BatteryManager
+
+*/
+
 public handler GetBatteryPercentage() returns Number
 	unsafe
 
@@ -51,6 +60,18 @@ public handler GetBatteryPercentage() returns Number
 	end unsafe
 end handler
 
+/**
+Summary: Retreives a string indicating if an Android device is connected to a charging source
+and if so the charger type as well.
+
+Description:
+Retreives the plugged state from the Android OS BatteryManager as a string that indicates
+if the Android device is connected to a charging source and if it is the charger type as well.
+
+The returned value will be a string containing one of the following items:
+Unplugged,Plugged AC,Plugged USB,Wireless Charging,Unknown State Number
+
+*/
 public handler GetBatteryPlugged() returns String
 	unsafe
 
@@ -93,6 +114,19 @@ public handler GetBatteryPlugged() returns String
 	end unsafe
 end handler
 
+/**
+Summary: Retreives a string indicating if the Android device's battery is charging, discharging, or full
+
+Description:
+Retreives the battery status from the Android OS BatteryManager as a string that indicates
+if the Android device's battery is charging, discharging, or full.
+If the state cannot be determined it will indicate the unknown state and
+possibly include the integer that was returned by the BatteryManager.
+
+The returned value will be a string containing one of the following items:
+Status:Charging,Status:Discharging,Status:Full,Status:Unknown,Status:Unknown Number
+
+*/
 public handler GetBatteryStatus() returns String
 	unsafe
 
@@ -134,6 +168,17 @@ public handler GetBatteryStatus() returns String
 	end unsafe
 end handler
 
+/**
+Summary: Retreives a string indicating the health of an Android device's battery.
+
+Description:
+Retreives the battery health information from the Android OS BatteryManager
+and returns it as a string
+
+The returned value will contain one of the following items:
+Health:Good,Health:Overheat,Health:Cold,Health:OverVoltage,Health:Dead,Health:Failing,Health:Unknown
+
+*/
 public handler GetBatteryHealth() returns String
 	unsafe
 
@@ -179,6 +224,13 @@ public handler GetBatteryHealth() returns String
 	end unsafe
 end handler
 
+/**
+Summary: Retreives a string indicating Android device's battery technology type.
+
+Description:
+Retreives the battery technology type information from the Android OS BatteryManager
+and returns it as a string
+*/
 public handler GetBatteryTechnology() returns String
 	unsafe
 		// Get the application context. We rely on an undocumented
