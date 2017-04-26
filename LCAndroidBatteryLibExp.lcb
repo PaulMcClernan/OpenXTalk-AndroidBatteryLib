@@ -259,4 +259,41 @@ public handler GetBatteryTechnology() returns String
 	end unsafe
 end handler
 
+
+/**
+Summary: Retreives an integer that is the voltage level of a Android device's charging source.
+
+Description:
+Retreives an integer that is the voltage level of a Android device's charging source.
+*/
+public handler GetBatteryVoltage() returns Number
+	unsafe
+
+		// Get the application context. We rely on an undocumented
+		// method to get this 'statically' at the moment.
+		variable tClass as JObject
+		put ClassForName(StringToJString("android.app.ActivityThread")) into tClass
+
+		variable tMethod as JObject
+		put GetCurrentApplicationMethod(tClass, StringToJString("currentApplication"), nothing) into tMethod
+
+	 	variable tContext as JObject
+	 	put MethodInvoke(tMethod, nothing, nothing) into tContext
+
+	 	// Get an intent filter for the battery changed intent
+	 	variable tFilter as JObject
+	 	put GetIntentFilter(StringToJString("android.intent.action.BATTERY_CHANGED")) into tFilter
+
+		// Get the intent
+	 	variable tIntent as JObject
+	 	put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
+
+		// Get the relevant values from the intent.
+		variable tVoltInt as Integer
+		put GetIntentValueInt(tIntent, StringToJString("voltage"), -1) into tVoltInt
+
+		return tVoltInt
+	end unsafe
+end handler
+
 end library
