@@ -5,7 +5,303 @@ use com.livecode.java
 
 metadata title is "Android Battery Library"
 metadata author is "LiveCode"
+metadata version is "1.0.0"library com.livecode.library.androidbattery
+
+use com.livecode.foreign
+use com.livecode.java
+
+metadata title is "Android Battery Library"
+metadata author is "LiveCode"
 metadata version is "1.0.0"
+
+foreign handler ClassForName(in pClass as JString) returns JObject binds to "java:java.lang.Class>forName(Ljava/lang/String;)Ljava/lang/Class;!static"
+foreign handler GetCurrentApplicationMethod(in pActivityThread as JObject, in pMethod as JString, in pParams as optional JObject) returns JObject binds to "java:java.lang.Class>getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;"
+foreign handler MethodInvoke(in pMethod as JObject, in pInstance as optional JObject, in pParams as optional JObject) returns JObject binds to "java:java.lang.reflect.Method>invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;"
+
+foreign handler GetIntentFilter(in pAction as JString) returns JObject binds to "java:android.content.IntentFilter>new(Ljava/lang/String;)"
+foreign handler ApplicationRegisterReceiver(in pContext as JObject, in pObj as optional JObject, in pFilter as JObject) returns JObject binds to "java:android.content.Context>registerReceiver(Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;)Landroid/content/Intent;"
+foreign handler GetIntentValueInt(in pIntent as JObject, in pWhich as JString, in pDefault as CInt) returns CInt binds to "java:android.content.Intent>getIntExtra(Ljava/lang/String;I)I"
+foreign handler GetIntentValueStr(in pIntent as JObject, in pWhich as JString, in pDefault as CInt) returns JString binds to "java:android.content.Intent>getStringExtra(Ljava/lang/String;I)Ljava/lang/String;"
+
+--- https://developer.android.com/reference/android/os/BatteryManager.html
+
+/**
+Summary: Get an Android device battery's current charge percentage
+
+Description:
+Retreives the charged percentage amount as an integer from the Android OS BatteryManager
+
+*/
+
+public handler GetBatteryPercentage() returns Number
+	unsafe
+
+		// Get the application context. We rely on an undocumented
+		// method to get this 'statically' at the moment.
+		variable tClass as JObject
+		put ClassForName(StringToJString("android.app.ActivityThread")) into tClass
+
+		variable tMethod as JObject
+		put GetCurrentApplicationMethod(tClass, StringToJString("currentApplication"), nothing) into tMethod
+
+	 	variable tContext as JObject
+	 	put MethodInvoke(tMethod, nothing, nothing) into tContext
+
+	 	// Get an intent filter for the battery changed intent
+	 	variable tFilter as JObject
+	 	put GetIntentFilter(StringToJString("android.intent.action.BATTERY_CHANGED")) into tFilter
+
+		// Get the intent
+	 	variable tIntent as JObject
+	 	put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
+
+		// Get the relevant values from the intent.
+		variable tLevel as Integer
+		put GetIntentValueInt(tIntent, StringToJString("level"), -1) into tLevel
+
+		variable tScale as Integer
+		put GetIntentValueInt(tIntent, StringToJString("scale"), -1) into tScale
+
+		return tLevel / tScale * 100
+	end unsafe
+end handler
+
+/**
+Summary: Retreives a string indicating if an Android device is connected to a charging source
+and if so the charger type as well.
+
+Description:
+Retreives the plugged state from the Android OS BatteryManager as a string that indicates
+if the Android device is connected to a charging source and if it is the charger type as well.
+
+The returned value will be a string containing one of the following items:
+Unplugged,Plugged AC,Plugged USB,Wireless Charging,Unknown State Number
+
+*/
+public handler GetBatteryPlugged() returns String
+	unsafe
+
+		// Get the application context. We rely on an undocumented
+		// method to get this 'statically' at the moment.
+		variable tClass as JObject
+		put ClassForName(StringToJString("android.app.ActivityThread")) into tClass
+
+		variable tMethod as JObject
+		put GetCurrentApplicationMethod(tClass, StringToJString("currentApplication"), nothing) into tMethod
+
+	 	variable tContext as JObject
+	 	put MethodInvoke(tMethod, nothing, nothing) into tContext
+
+	 	// Get an intent filter for the battery changed intent
+	 	variable tFilter as JObject
+	 	put GetIntentFilter(StringToJString("android.intent.action.BATTERY_CHANGED")) into tFilter
+
+		// Get the intent
+	 	variable tIntent as JObject
+	 	put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
+
+		// Get the relevant values from the intent.
+		variable tPlugInt as Integer
+		variable tRetStr as String
+		put GetIntentValueInt(tIntent, StringToJString("plugged"), -1) into tPlugInt
+		if tPlugInt = 0 then
+			put "Unplugged" into tRetStr
+		else if tPlugInt = 1 then
+			put "Plugged AC" into tRetStr
+		else if tPlugInt = 2 then
+			 put "Plugged USB" into tRetStr
+		else if tPlugInt = 4 then
+			put "Wireless Charging" into tRetStr
+		else
+			put "Unknown State " & tPlugInt into tRetStr
+		end if
+		return tRetStr
+	end unsafe
+end handler
+
+/**
+Summary: Retreives a string indicating if the Android device's battery is charging, discharging, or full
+
+Description:
+Retreives the battery status from the Android OS BatteryManager as a string that indicates
+if the Android device's battery is charging, discharging, or full.
+If the state cannot be determined it will indicate the unknown state and
+possibly include the integer that was returned by the BatteryManager.
+
+The returned value will be a string containing one of the following items:
+Status:Charging,Status:Discharging,Status:Full,Status:Unknown,Status:Unknown Number
+
+*/
+public handler GetBatteryStatus() returns String
+	unsafe
+
+		// Get the application context. We rely on an undocumented
+		// method to get this 'statically' at the moment.
+		variable tClass as JObject
+		put ClassForName(StringToJString("android.app.ActivityThread")) into tClass
+
+		variable tMethod as JObject
+		put GetCurrentApplicationMethod(tClass, StringToJString("currentApplication"), nothing) into tMethod
+
+	 	variable tContext as JObject
+	 	put MethodInvoke(tMethod, nothing, nothing) into tContext
+
+	 	// Get an intent filter for the battery changed intent
+	 	variable tFilter as JObject
+	 	put GetIntentFilter(StringToJString("android.intent.action.BATTERY_CHANGED")) into tFilter
+
+		// Get the intent
+	 	variable tIntent as JObject
+	 	put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
+
+		// Get the relevant values from the intent.
+		variable tStatusInt as Integer
+		variable tRetStr as String
+		put GetIntentValueInt(tIntent, StringToJString("status"), -1) into tStatusInt
+		if tStatusInt = 1 then
+			put "Status:Unknown" into tRetStr
+		else if tStatusInt = 2 then
+			put "Status:Charging" into tRetStr
+		else if tStatusInt = 3 then
+			put "Status:Discharging" into tRetStr
+		else if tStatusInt = 5 then
+			put "Status:Full" into tRetStr
+		else
+			put "Status:Unknown " & tStatusInt into tRetStr
+		end if
+		return tRetStr
+	end unsafe
+end handler
+
+/**
+Summary: Retreives a string indicating the health of an Android device's battery.
+
+Description:
+Retreives the battery health information from the Android OS BatteryManager
+and returns it as a string
+
+The returned value will contain one of the following items:
+Health:Good,Health:Overheat,Health:Cold,Health:OverVoltage,Health:Dead,Health:Failing,Health:Unknown
+
+*/
+public handler GetBatteryHealth() returns String
+	unsafe
+
+		// Get the application context. We rely on an undocumented
+		// method to get this 'statically' at the moment.
+		variable tClass as JObject
+		put ClassForName(StringToJString("android.app.ActivityThread")) into tClass
+
+		variable tMethod as JObject
+		put GetCurrentApplicationMethod(tClass, StringToJString("currentApplication"), nothing) into tMethod
+
+	 	variable tContext as JObject
+	 	put MethodInvoke(tMethod, nothing, nothing) into tContext
+
+	 	// Get an intent filter for the battery changed intent
+	 	variable tFilter as JObject
+	 	put GetIntentFilter(StringToJString("android.intent.action.BATTERY_CHANGED")) into tFilter
+
+		// Get the intent
+	 	variable tIntent as JObject
+	 	put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
+
+		// Get the relevant values from the intent.
+		variable tHealthInt as Integer
+		variable tRetStr as String
+		put GetIntentValueInt(tIntent, StringToJString("health"), -1) into tHealthInt
+		if tHealthInt = 2 then
+			put "Health:Good" into tRetStr
+		else if tHealthInt = 3 then
+			 put "Health:Overheat" into tRetStr
+		else if tHealthInt = 7 then
+			put "Health:Cold" into tRetStr
+		else if tHealthInt = 5 then
+			put "Health:OverVoltage" into tRetStr
+		else if tHealthInt = 4 then
+			put "Health:Dead" into tRetStr
+		else if tHealthInt = 6 then
+			put "Health:Failing" into tRetStr
+		else
+			put "Health:Unknown " & tHealthInt into tRetStr
+		end if
+		return tRetStr
+	end unsafe
+end handler
+
+/**
+Summary: Retreives a string indicating Android device's battery technology type.
+
+Description:
+Retreives the battery technology type information from the Android OS BatteryManager
+and returns it as a string
+*/
+public handler GetBatteryTechnology() returns String
+	unsafe
+		// Get the application context. We rely on an undocumented
+		// method to get this 'statically' at the moment.
+		variable tClass as JObject
+		put ClassForName(StringToJString("android.app.ActivityThread")) into tClass
+
+		variable tMethod as JObject
+		put GetCurrentApplicationMethod(tClass, StringToJString("currentApplication"), nothing) into tMethod
+
+	 	variable tContext as JObject
+	 	put MethodInvoke(tMethod, nothing, nothing) into tContext
+
+	 	// Get an intent filter for the battery changed intent
+	 	variable tFilter as JObject
+	 	put GetIntentFilter(StringToJString("android.intent.action.BATTERY_CHANGED")) into tFilter
+
+		// Get the intent
+	 	variable tIntent as JObject
+	 	put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
+
+		// Get the relevant values from the intent.
+		variable tTechStr as JString
+		put GetIntentValueStr(tIntent, StringToJString("technology"), -1) into tTechStr
+		return StringFromJString(tTechStr)
+	end unsafe
+end handler
+
+
+/**
+Summary: Retreives an integer that is the voltage level of a Android device's charging source.
+
+Description:
+Retreives an integer that is the voltage level of a Android device's charging source.
+*/
+public handler GetBatteryVoltage() returns Number
+	unsafe
+
+		// Get the application context. We rely on an undocumented
+		// method to get this 'statically' at the moment.
+		variable tClass as JObject
+		put ClassForName(StringToJString("android.app.ActivityThread")) into tClass
+
+		variable tMethod as JObject
+		put GetCurrentApplicationMethod(tClass, StringToJString("currentApplication"), nothing) into tMethod
+
+	 	variable tContext as JObject
+	 	put MethodInvoke(tMethod, nothing, nothing) into tContext
+
+	 	// Get an intent filter for the battery changed intent
+	 	variable tFilter as JObject
+	 	put GetIntentFilter(StringToJString("android.intent.action.BATTERY_CHANGED")) into tFilter
+
+		// Get the intent
+	 	variable tIntent as JObject
+	 	put ApplicationRegisterReceiver(tContext, nothing, tFilter) into tIntent
+
+		// Get the relevant values from the intent.
+		variable tVoltInt as Integer
+		put GetIntentValueInt(tIntent, StringToJString("voltage"), -1) into tVoltInt
+
+		return tVoltInt
+	end unsafe
+end handler
+
+end library
 
 foreign handler ClassForName(in pClass as JString) returns JObject binds to "java:java.lang.Class>forName(Ljava/lang/String;)Ljava/lang/Class;!static"
 foreign handler GetCurrentApplicationMethod(in pActivityThread as JObject, in pMethod as JString, in pParams as optional JObject) returns JObject binds to "java:java.lang.Class>getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;"
